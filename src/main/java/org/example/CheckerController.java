@@ -13,6 +13,10 @@ public class CheckerController {
     }
     public void StartAnalisys(File file) throws InvalidTypeException, IOException {
         var path = file.getAbsolutePath();
-        sourceReader.GenerateTokensFromFile(path);
+        sourceReader.GenerateFileCharsMetadata(path);
+        var fileChars = sourceReader.GetTokenList();
+        var lexer = new Lexer(fileChars);
+        var tokens = lexer.Tokenize();
+        tokens.forEach(System.out::println);
     }
 }

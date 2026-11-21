@@ -14,7 +14,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         try {
             var controller = new CheckerController();
-            controller.StartAnalisys(new File("/home/yan/lerTeclado.c"));
+            controller.StartAnalisys(new File("teste.262"));
         } catch (InvalidTypeException e) {
             throw new RuntimeException(e);
         }

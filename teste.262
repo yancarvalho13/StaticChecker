@@ -1,0 +1,7 @@
+program teste
+declarations
+varType integer: contador
+endDeclarations
+contador := 7
+print "teste do lexer"
+endProgram

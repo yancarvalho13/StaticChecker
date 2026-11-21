@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SourceReader {
-    private List<CharStatus> tokens = new ArrayList<>();
+    private List<CharStatus> fileChars = new ArrayList<>();
     public SourceReader(){
     }
     public List<CharStatus> GetTokenList(){
-        return  tokens;
+        return  fileChars;
     }
-    public void GenerateTokensFromFile(String filePath) throws IOException, InvalidTypeException {
+    public void GenerateFileCharsMetadata(String filePath) throws IOException, InvalidTypeException {
             var file = new File(filePath);
             if (!file.exists()) {
                 System.out.println("Arquivo nao encontrado");
@@ -35,7 +35,7 @@ public class SourceReader {
 
         while((readerChar = reader.read()) != -1){
             var realChar = (char) readerChar;
-            tokens.add(new CharStatus(realChar,line,column));
+            fileChars.add(new CharStatus(realChar,line,column));
             if(realChar == '\n'){
                 line++;
                 column = 0;
@@ -43,8 +43,6 @@ public class SourceReader {
                 column ++;
             }
         }
-
-        tokens.forEach(System.out::println);
     }
 }
 
