@@ -15,6 +15,7 @@ public class SourceReader {
         return  fileChars;
     }
     public void GenerateFileCharsMetadata(String filePath) throws IOException, InvalidTypeException {
+            fileChars.clear();
             var file = new File(filePath);
             if (!file.exists()) {
                 System.out.println("Arquivo nao encontrado");
