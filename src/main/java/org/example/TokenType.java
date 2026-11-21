@@ -1,6 +1,8 @@
+
 package org.example;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public enum TokenType {
@@ -88,11 +90,17 @@ public enum TokenType {
     }
 
     TokenType(String lexeme) {
-        this.lexeme = lexeme;
+        this.lexeme = lexeme == null
+                ? null
+                : lexeme.toUpperCase(Locale.ROOT);
     }
 
     public static TokenType fromLexeme(String lexeme) {
-        return LOOKUP.get(lexeme);
+        if (lexeme == null) {
+            return null;
+        }
+
+        return LOOKUP.get(lexeme.toUpperCase(Locale.ROOT));
     }
 
     public String getLexeme() {

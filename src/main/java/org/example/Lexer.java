@@ -11,7 +11,13 @@ public class Lexer {
     private int position = 0;
 
     public Lexer(List<CharStatus> fileChars) {
-        this.fileChars = fileChars;
+        this.fileChars = fileChars.stream()
+                .map(c -> new CharStatus(
+                        Character.toUpperCase(c.token()),
+                        c.line(),
+                        c.column()
+                ))
+                .toList();
     }
 
     public List<Token> Tokenize(){
@@ -73,6 +79,10 @@ public class Lexer {
             throw error("Caractere invalido", start);
         }
         lexeme.append(Advance());
+        if (Peek() != '\''){
+            throw error("Aspas de fechamento ausente", start);
+        }
+        lexeme.append(Advance());
         AddToken(TokenType.CHAR_CONST,
                 lexeme.toString(), start);
     }
@@ -132,7 +142,7 @@ public class Lexer {
                 AppendLimited(lexeme, Advance());
             }
 
-            if(Peek() == 'e'){
+            if(Peek() == 'E'){
                 AppendLimited(lexeme, Advance());
                 if(Peek() == '+' || Peek() == '-'){
                     AppendLimited(lexeme, Advance());
@@ -165,12 +175,16 @@ public class Lexer {
 
         if(type == null) {
             //fazendo isso pra poder passar varType e palavras reservadas... me pergunto de Dennis Rithcie gostava dessa parada kkkk
-            for(char c : word.toCharArray()){
+            /*for(char c : word.toCharArray()){
                 if(c >= 'A' && c <= 'Z'){
                     throw new IllegalArgumentException("Identificador invalido: " + word);
                 }
+            } Resolvi metendo um uppercase no documento todo, essa bendita linguagem pede uppercase em tudo */
+            if(!tokens.isEmpty() && tokens.getLast().type() == TokenType.PROGRAM){
+                type = TokenType.PROGRAM_NAME;
+            }else {
+                type = TokenType.VARIABLE;
             }
-            type = TokenType.VARIABLE;
         }
 
         AddToken(type, word, start);
@@ -236,8 +250,7 @@ public class Lexer {
         return position >= fileChars.size();
     }
     private boolean IsLetter(char c){
-        return (c >= 'a' && c <= 'z')
-                || (c >= 'A' && c <= 'Z');
+        return c >= 'A' && c <= 'Z';
     }
     private boolean IsNumber(char c){
         return c >= '0' && c <= '9';
