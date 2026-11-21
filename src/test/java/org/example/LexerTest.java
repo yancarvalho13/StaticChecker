@@ -71,6 +71,17 @@ class LexerTest {
     }
 
     @Test
+    void enforcesIdentifierStartAndContinuationPatterns() {
+        List<Token> tokens = lexer("program App var_name _local function2").Tokenize();
+        assertEquals(TokenType.PROGRAM_NAME, tokens.get(1).type());
+        assertEquals(TokenType.VARIABLE, tokens.get(2).type());
+        assertEquals("VAR_NAME", tokens.get(2).lexeme());
+        assertEquals(TokenType.VARIABLE, tokens.get(3).type());
+        assertEquals("_LOCAL", tokens.get(3).lexeme());
+        assertEquals("FUNCTION2", tokens.get(4).lexeme());
+    }
+
+    @Test
     void filtersInvalidCharactersAndCanonicalizesIdentifiers() {
         Token token = lexer("va@riavel").nextToken();
         assertEquals("VARIAVEL", token.lexeme());
@@ -102,6 +113,23 @@ class LexerTest {
         for (String source : List.of("123.", "123.E10", "123.45E", "123.45E+", "123E10")) {
             assertThrows(IllegalArgumentException.class, () -> lexer(source).nextToken(), source);
         }
+    }
+
+    @Test
+    void keepsTruncatedRealLexemesValidWhenTheLimitHitsNumericPunctuation() {
+        String numberEndingAtDot = "12345678901234567890123456789.123";
+        Token trailingDot = lexer(numberEndingAtDot).nextToken();
+        Token trailingExponent = lexer("1.234567890123456789012345678E+123").nextToken();
+        Token trailingSign = lexer("1.23456789012345678901234567E+123").nextToken();
+
+        assertEquals(TokenType.REAL_CONST, trailingDot.type());
+        assertTrue(trailingDot.lexeme().matches("[0-9]+\\.[0-9]+"));
+        assertEquals(numberEndingAtDot.length(), trailingDot.originalLength());
+        assertTrue(trailingExponent.lexeme().matches("[0-9]+\\.[0-9]+(E[+-]?[0-9]+)?"));
+        assertTrue(trailingSign.lexeme().matches("[0-9]+\\.[0-9]+(E[+-]?[0-9]+)?"));
+        assertTrue(trailingDot.lexeme().length() <= 30);
+        assertTrue(trailingExponent.lexeme().length() <= 30);
+        assertTrue(trailingSign.lexeme().length() <= 30);
     }
 
     @Test

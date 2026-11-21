@@ -8,6 +8,8 @@ public class ScopeController {
     private boolean declarationIdentifiers;
     private boolean expectingFunctionName;
     private boolean expectingFunctionReturnType;
+    private String lastParameterLexeme;
+    private boolean parameterVectorPending;
 
     public ScopeController(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -20,13 +22,14 @@ public class ScopeController {
         declarationIdentifiers = false;
         expectingFunctionName = false;
         expectingFunctionReturnType = false;
+        lastParameterLexeme = null;
+        parameterVectorPending = false;
     }
 
     public Token nextToken(Lexer lexer) {
         prepareLexer(lexer);
         Token token = lexer.nextToken();
-        observe(token);
-        return token;
+        return observe(token);
     }
 
     private void prepareLexer(Lexer lexer) {
@@ -37,9 +40,9 @@ public class ScopeController {
         }
     }
 
-    private void observe(Token token) {
+    private Token observe(Token token) {
         if (token.type() == TokenType.EOF) {
-            return;
+            return token;
         }
 
         switch (token.type()) {
@@ -51,12 +54,28 @@ public class ScopeController {
             }
             case REAL, INTEGER, STRING, BOOLEAN, CHARACTER, VOID -> observeType(token.type());
             case LEFT_BRACKET -> {
-                if (declaredType != null && !declarationIdentifiers) {
+                if (declarationIdentifiers && declarationKind == DeclarationKind.PARAMETER) {
+                    parameterVectorPending = lastParameterLexeme != null;
+                } else if (declaredType != null && !declarationIdentifiers) {
                     arrayDeclaration = true;
                 }
             }
+            case INT_CONST -> {
+                if (parameterVectorPending) {
+                    parameterVectorPending = true;
+                }
+            }
+            case RIGHT_BRACKET -> {
+                if (parameterVectorPending && lastParameterLexeme != null) {
+                    SymbolEntry parameter = symbolTable.find(lastParameterLexeme);
+                    if (parameter != null) {
+                        parameter.setSymbolType(arrayType(declaredType));
+                    }
+                    parameterVectorPending = false;
+                }
+            }
             case COLON -> observeColon();
-            case VARIABLE, FUNCTION_NAME, PROGRAM_NAME -> observeIdentifier(token);
+            case VARIABLE, FUNCTION_NAME, PROGRAM_NAME -> { return observeIdentifier(token); }
             case COMMA -> { }
             case SEMICOLON -> endVariableOrParameterDeclaration();
             case END_FUNCTION, END_FUNCTIONS, END_PROGRAM ->
@@ -69,6 +88,7 @@ public class ScopeController {
                 }
             }
         }
+        return token;
     }
 
     private void beginDeclaration(DeclarationKind kind) {
@@ -77,6 +97,8 @@ public class ScopeController {
         arrayDeclaration = false;
         declarationIdentifiers = false;
         expectingFunctionName = false;
+        lastParameterLexeme = null;
+        parameterVectorPending = false;
         if (kind != DeclarationKind.NONE) {
             expectingFunctionReturnType = false;
         }
@@ -100,10 +122,10 @@ public class ScopeController {
         }
     }
 
-    private void observeIdentifier(Token token) {
+    private Token observeIdentifier(Token token) {
         if (token.type() == TokenType.PROGRAM_NAME) {
-            symbolTable.register(token, null, token.line() + 1);
-            return;
+            SymbolEntry entry = symbolTable.register(token, null, token.line() + 1);
+            return token.withSymbolIndex(entry.getIndex());
         }
 
         String type = null;
@@ -115,7 +137,12 @@ public class ScopeController {
         } else if (declarationIdentifiers && declaredType != null) {
             type = arrayDeclaration ? arrayType(declaredType) : declaredType;
         }
-        symbolTable.register(token, type, token.line() + 1);
+        SymbolEntry entry = symbolTable.register(token, type, token.line() + 1);
+        if (declarationIdentifiers && declarationKind == DeclarationKind.PARAMETER
+                && token.type() == TokenType.VARIABLE) {
+            lastParameterLexeme = token.lexeme();
+        }
+        return token.withSymbolIndex(entry.getIndex());
     }
 
     private void endVariableOrParameterDeclaration() {

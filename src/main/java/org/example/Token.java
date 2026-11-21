@@ -1,13 +1,21 @@
 package org.example;
 
 public record Token(TokenType type, String lexeme, int originalLength,
-                    int line, int column) {
+                    int line, int column, int symbolIndex) {
+    public Token(TokenType type, String lexeme, int originalLength, int line, int column) {
+        this(type, lexeme, originalLength, line, column, -1);
+    }
+
     public Token(TokenType type, String lexeme, int line, int column) {
-        this(type, lexeme, lexeme.length(), line, column);
+        this(type, lexeme, lexeme.length(), line, column, -1);
     }
 
     public String atomCode() {
         return type.getCode();
+    }
+
+    public Token withSymbolIndex(int index) {
+        return new Token(type, lexeme, originalLength, line, column, index);
     }
 
     @Override

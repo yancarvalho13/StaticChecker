@@ -1,11 +1,14 @@
 package org.example;
 
-import com.sun.jdi.InvalidTypeException;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class SourceReader {
     private List<CharStatus> fileChars = new ArrayList<>();
@@ -14,17 +17,17 @@ public class SourceReader {
     public List<CharStatus> GetTokenList(){
         return  fileChars;
     }
-    public void GenerateFileCharsMetadata(String filePath) throws IOException, InvalidTypeException {
+    public void GenerateFileCharsMetadata(String filePath) throws IOException {
             fileChars.clear();
             var file = new File(filePath);
             if (!file.exists()) {
-                System.out.println("Arquivo nao encontrado");
-                throw new FileNotFoundException();
+                throw new FileNotFoundException("Arquivo nao encontrado: " + filePath);
             }
             /*if(!file.getAbsolutePath().endsWith(".262")){
                 throw new InvalidTypeException("Informe um arquivo .262");
             }*/
-            try (var reader = new BufferedReader(new FileReader(file))){
+            try (var reader = new BufferedReader(new InputStreamReader(
+                    Files.newInputStream(file.toPath()), StandardCharsets.US_ASCII))) {
                 GenerateTokens(reader);
             }
         }

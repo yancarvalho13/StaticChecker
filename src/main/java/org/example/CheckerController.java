@@ -1,7 +1,6 @@
 
 package org.example;
 
-import com.sun.jdi.InvalidTypeException;
 import java.io.File;
 import java.io.IOException;
 
@@ -15,8 +14,7 @@ public class CheckerController {
         symbolTable = new SymbolTable();
     }
 
-    public void StartAnalisys(File file)
-            throws InvalidTypeException, IOException {
+    public void StartAnalisys(File file) throws IOException {
 
         symbolTable.clear();
         var path = file.getAbsolutePath();

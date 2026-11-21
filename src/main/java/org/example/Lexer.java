@@ -182,16 +182,39 @@ public class Lexer {
         } else if (Peek() == 'E') {
             throw error("Expoente so e permitido em real", start);
         }
-        return token(type, lexeme.toString(), originalLength, start);
+        return token(type, truncateNumber(lexeme.toString(), type), originalLength, start);
     }
 
     private int readDigits(StringBuilder lexeme) {
         int count = 0;
         while (IsNumber(Peek())) {
-            append(lexeme, Advance());
+            lexeme.append(Advance());
             count++;
         }
         return count;
+    }
+
+    private String truncateNumber(String number, TokenType type) {
+        if (number.length() <= MAX_ATOM_LENGTH) {
+            return number;
+        }
+        String stored = number.substring(0, MAX_ATOM_LENGTH);
+        if (type == TokenType.INT_CONST) {
+            return stored;
+        }
+        int decimal = stored.indexOf('.');
+        if (decimal < 0 || decimal == stored.length() - 1) {
+            int integerDigits = Math.min(number.indexOf('.'), MAX_ATOM_LENGTH - 2);
+            return number.substring(0, integerDigits) + ".0";
+        }
+        int exponent = stored.indexOf('E');
+        if (exponent >= 0) {
+            String exponentPart = stored.substring(exponent + 1);
+            if (exponentPart.isEmpty() || exponentPart.equals("+") || exponentPart.equals("-")) {
+                stored = stored.substring(0, exponent);
+            }
+        }
+        return stored;
     }
 
     private void skipInvalidInNumber() {
@@ -233,7 +256,8 @@ public class Lexer {
             if (nextIdentifierType != null) {
                 type = requestedType;
                 nextIdentifierType = null;
-            } else if (previousType == TokenType.PROGRAM) {
+            } else if (previousType == TokenType.PROGRAM
+                    && requestedType == TokenType.PROGRAM_NAME) {
                 type = TokenType.PROGRAM_NAME;
             } else {
                 type = TokenType.VARIABLE;

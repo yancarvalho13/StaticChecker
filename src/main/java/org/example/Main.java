@@ -1,22 +1,25 @@
 package org.example;
 
-import com.sun.jdi.InvalidTypeException;
-
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        try {
-            var controller = new CheckerController();
-            controller.StartAnalisys(new File("teste.262"));
-        } catch (InvalidTypeException e) {
-            throw new RuntimeException(e);
+        if (args.length != 1) {
+            System.err.println("Uso: StaticChecker <arquivo-sem-extensao-.262>");
+            return;
         }
+
+        Path source = sourcePath(args[0]);
+        new CheckerController().StartAnalisys(source.toFile());
+    }
+
+    static Path sourcePath(String input) {
+        Path supplied = Path.of(input);
+        String fileName = supplied.getFileName().toString();
+        return fileName.toLowerCase().endsWith(".262")
+                ? supplied
+                : supplied.resolveSibling(fileName + ".262");
     }
 }

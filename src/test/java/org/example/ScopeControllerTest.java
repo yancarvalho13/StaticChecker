@@ -55,4 +55,55 @@ class ScopeControllerTest {
         assertEquals("IN", table.find("input").getSymbolType());
         assertEquals(2, table.find("input").getLines().size());
     }
+
+    @Test
+    void classifiesVectorParametersAndMultipleDeclarations() {
+        SymbolTable table = new SymbolTable();
+        ScopeController scope = new ScopeController(table);
+        scope.startAnalysis();
+        scan(scope, lexer("program app declarations endDeclarations functions "
+                + "funcType void: run(paramType integer: values[10], count) "
+                + "return endFunction endFunctions endProgram"));
+
+        assertEquals(TokenType.FUNCTION_NAME, table.find("run").getAtom());
+        assertEquals("VD", table.find("run").getSymbolType());
+        assertEquals("AI", table.find("values").getSymbolType());
+        assertEquals("IN", table.find("count").getSymbolType());
+    }
+
+    @Test
+    void mapsEverySupportedScalarAndArrayType() {
+        SymbolTable table = new SymbolTable();
+        ScopeController scope = new ScopeController(table);
+        scope.startAnalysis();
+        scan(scope, lexer("program app declarations "
+                + "varType real: r; varType real[]: ra[1]; "
+                + "varType string: s; varType string[]: sa[1]; "
+                + "varType boolean: b; varType boolean[]: ba[1]; "
+                + "varType character: c; varType character[]: ca[1]; "
+                + "endDeclarations endProgram"));
+
+        assertEquals("FP", table.find("r").getSymbolType());
+        assertEquals("AF", table.find("ra").getSymbolType());
+        assertEquals("ST", table.find("s").getSymbolType());
+        assertEquals("AS", table.find("sa").getSymbolType());
+        assertEquals("BL", table.find("b").getSymbolType());
+        assertEquals("AB", table.find("ba").getSymbolType());
+        assertEquals("CH", table.find("c").getSymbolType());
+        assertEquals("AC", table.find("ca").getSymbolType());
+    }
+
+    @Test
+    void returnsSymbolIndexOnEachIdentifierToken() {
+        SymbolTable table = new SymbolTable();
+        ScopeController scope = new ScopeController(table);
+        scope.startAnalysis();
+        Lexer lexer = lexer("program app");
+        Token token;
+        do { token = scope.nextToken(lexer); }
+        while (token.type() != TokenType.PROGRAM_NAME);
+
+        assertEquals(1, token.symbolIndex());
+        assertEquals("C03", token.atomCode());
+    }
 }
